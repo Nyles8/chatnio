@@ -72,7 +72,7 @@ func ChatRelayAPI(c *gin.Context) {
 		suffix := strings.TrimPrefix(form.Model, "web-")
 
 		form.Model = suffix
-		messages = web.UsingWebNativeSegment(true, messages)
+		messages = web.ToSearched(true, messages)
 	}
 
 	if strings.HasSuffix(form.Model, "-official") {
@@ -94,7 +94,7 @@ func ChatRelayAPI(c *gin.Context) {
 }
 
 func getChatProps(form RelayForm, messages []globals.Message, buffer *utils.Buffer) *adaptercommon.ChatProps {
-	return &adaptercommon.ChatProps{
+	return adaptercommon.CreateChatProps(&adaptercommon.ChatProps{
 		Model:             form.Model,
 		Message:           messages,
 		MaxTokens:         form.MaxTokens,
@@ -106,8 +106,7 @@ func getChatProps(form RelayForm, messages []globals.Message, buffer *utils.Buff
 		TopK:              form.TopK,
 		Tools:             form.Tools,
 		ToolChoice:        form.ToolChoice,
-		Buffer:            *buffer,
-	}
+	}, buffer)
 }
 
 func sendTranshipmentResponse(c *gin.Context, form RelayForm, messages []globals.Message, id string, created int64, user *auth.User, plan bool) {
@@ -120,7 +119,7 @@ func sendTranshipmentResponse(c *gin.Context, form RelayForm, messages []globals
 		return nil
 	})
 
-	admin.AnalysisRequest(form.Model, buffer, err)
+	admin.AnalyseRequest(form.Model, buffer, err)
 	if err != nil {
 		auth.RevertSubscriptionUsage(db, cache, user, form.Model)
 		globals.Warn(fmt.Sprintf("error from chat request api: %s (instance: %s, client: %s)", err, form.Model, c.ClientIP()))
@@ -154,7 +153,7 @@ func sendTranshipmentResponse(c *gin.Context, form RelayForm, messages []globals
 		},
 		Usage: Usage{
 			PromptTokens:     buffer.CountInputToken(),
-			CompletionTokens: buffer.CountOutputToken(),
+			CompletionTokens: buffer.CountOutputToken(false),
 			TotalTokens:      buffer.CountToken(),
 		},
 		Quota: utils.Multi[*float32](form.Official, nil, utils.ToPtr(buffer.GetQuota())),
@@ -205,7 +204,7 @@ func getStreamTranshipmentForm(id string, created int64, form RelayForm, data *g
 		},
 		Usage: Usage{
 			PromptTokens:     buffer.CountInputToken(),
-			CompletionTokens: buffer.CountOutputToken(),
+			CompletionTokens: buffer.CountOutputToken(true),
 			TotalTokens:      buffer.CountToken(),
 		},
 		Quota: utils.Multi[*float32](form.Official, nil, utils.ToPtr(buffer.GetQuota())),
@@ -235,7 +234,7 @@ func sendStreamTranshipmentResponse(c *gin.Context, form RelayForm, messages []g
 			},
 		)
 
-		admin.AnalysisRequest(form.Model, buffer, err)
+		admin.AnalyseRequest(form.Model, buffer, err)
 		if err != nil {
 			auth.RevertSubscriptionUsage(db, cache, user, form.Model)
 			globals.Warn(fmt.Sprintf("error from chat request api: %s (instance: %s, client: %s)", err.Error(), form.Model, c.ClientIP()))

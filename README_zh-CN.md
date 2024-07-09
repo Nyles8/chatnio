@@ -8,10 +8,11 @@ _🚀 **下一代 AI 一站式解决方案**_
 
 _🚀 **Next Generation AI One-Stop Solution**_
 
+[English](https://github.com/Deeptrain-Community/chatnio/blob/master/README.md) | 简体中文
 
 [官网](https://chatnio.net) | [开放文档](https://docs.chatnio.net) | [SDKs](https://docs.chatnio.net/developers/sdk) | [QQ 群](http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=1mv1Y8SyxnQVvQCoqhmIgVTbwQmkNmvQ&authKey=5KUA9nJPR29nQwjbsYNknN2Fj6cKePkRes%2B1QZy84Dr4GHYVzcvb0yklxiMMNVJN&noverify=0&group_code=749482576)
 
-[English](https://github.com/Deeptrain-Community/chatnio/blob/master/README.md) | 简体中文
+[![Chat Nio: #1 Repo Of The Day](https://trendshift.io/api/badge/repositories/6369)](https://trendshift.io/repositories/6369)
 
 [![code-stats](https://stats.deeptrain.net/repo/Deeptrain-Community/chatnio)](https://stats.deeptrain.net)
 
@@ -143,11 +144,10 @@ _🚀 **Next Generation AI One-Stop Solution**_
    > - 配置文件挂载目录项目 ~/**config**
 
 2. ⚡ Docker 安装 (轻量运行时, 常用于外置 _MYSQL/RDS_ 服务)
-    > 如需使用 stable 版本, 请使用 `programzmh/chatnio:stable` 替代 `programzmh/chatnio:latest`  
+    > 运行成功后, 宿主机地址为 `http://localhost:8094`。如需使用 stable 版本, 请使用 `programzmh/chatnio:stable` 替代 `programzmh/chatnio:latest`  
     ```shell
    docker run -d --name chatnio \
       --network host \
-      -p 8000:8094 \
       -v ~/config:/config \
       -v ~/logs:/logs \
       -v ~/storage:/storage \
@@ -163,7 +163,6 @@ _🚀 **Next Generation AI One-Stop Solution**_
       programzmh/chatnio:latest
     ```
    > - *--network host* 指使用宿主机网络, 使 Docker 容器使用宿主机的网络, 可自行修改
-   > - *-p 8000:8094* 指映射宿主机端口为 8000, 可自行修改冒号前的端口号
    > - SECRET: JWT 密钥, 自行生成随机字符串修改
    > - SERVE_STATIC: 是否启用静态文件服务 (正常情况下不需要更改此项, 详见下方常见问题解答)
    > - *-v ~/config:/config* 挂载配置文件, *-v ~/logs:/logs* 挂载日志文件的宿主机目录, *-v ~/storage:/storage* 挂载附加功能的生成文件

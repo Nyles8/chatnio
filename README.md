@@ -8,10 +8,11 @@ _🚀 **下一代 AI 一站式解决方案**_
 
 _🚀 **Next Generation AI One-Stop Solution**_
 
+English | [简体中文](https://github.com/Deeptrain-Community/chatnio/blob/master/README_zh-CN.md)
 
 [Official Website](https://chatnio.net) | [Docs](https://docs.chatnio.net) | [SDKs](https://docs.chatnio.net/developers/sdk) | [QQ Group](http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=1mv1Y8SyxnQVvQCoqhmIgVTbwQmkNmvQ&authKey=5KUA9nJPR29nQwjbsYNknN2Fj6cKePkRes%2B1QZy84Dr4GHYVzcvb0yklxiMMNVJN&noverify=0&group_code=749482576)
 
-English | [简体中文](https://github.com/Deeptrain-Community/chatnio/blob/master/README_zh-CN.md)
+[![Chat Nio: #1 Repo Of The Day](https://trendshift.io/api/badge/repositories/6369)](https://trendshift.io/repositories/6369)
 
 [![code-stats](https://stats.deeptrain.net/repo/Deeptrain-Community/chatnio)](https://stats.deeptrain.net)
 
@@ -143,11 +144,10 @@ English | [简体中文](https://github.com/Deeptrain-Community/chatnio/blob/mas
    > - Mount directory for configuration files: ~/**config**
 
 2. ⚡ Docker installation (when running lightweight, it is often used in external _Mysql/RDS_ service)  
-    > If you need to use the stable version, please use `programzmh/chatnio:stable` instead of `programzmh/chatnio:latest`.  
+    > The host mapping address is `http://localhost:8094` after successful operation. If you need to use the stable version, please use `programzmh/chatnio:stable` instead of `programzmh/chatnio:latest`.  
     ```shell
    docker run -d --name chatnio \
       --network host \
-      -p 8000:8094 \
       -v ~/config:/config \
       -v ~/logs:/logs \
       -v ~/storage:/storage \
@@ -163,7 +163,6 @@ English | [简体中文](https://github.com/Deeptrain-Community/chatnio/blob/mas
       programzmh/chatnio:latest
     ```
    > - *--network host* Assigns the container to use the host network, allowing it to access the host's network. You can modify this as needed.
-   > - *-p 8000:8094* Maps host port 8000 to 8094, feel free to modify the port number before the colon.
    > - SECRET: JWT Secret Key, generate a random string to modify
    > - SERVE_STATIC: Whether to enable static file service (normally there is no need to change this item, see below for answers to frequently asked questions)
    > - *-v ~/config:/config* mount host machine directory of configuration file, *-v ~/logs:/logs* mount host machine directory of log file,*-v ~/storage:/storage* mount generated files of additional functions

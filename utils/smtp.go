@@ -3,22 +3,25 @@ package utils
 import (
 	"bytes"
 	"fmt"
-	"gopkg.in/mail.v2"
 	"strings"
 	"text/template"
+
+	"gopkg.in/mail.v2"
 )
 
 type SmtpPoster struct {
 	Host     string
+	Protocol bool
 	Port     int
 	Username string
 	Password string
 	From     string
 }
 
-func NewSmtpPoster(host string, port int, username string, password string, from string) *SmtpPoster {
+func NewSmtpPoster(host string, protocol bool, port int, username string, password string, from string) *SmtpPoster {
 	return &SmtpPoster{
 		Host:     host,
+		Protocol: protocol,
 		Port:     port,
 		Username: username,
 		Password: password,
@@ -35,13 +38,28 @@ func (s *SmtpPoster) SendMail(to string, subject string, body string) error {
 		return fmt.Errorf("smtp not configured properly")
 	}
 
-	dialer := mail.NewDialer(s.Host, s.Port, s.From, s.Password)
-	message := mail.NewMessage()
+	var dialer *mail.Dialer
+	var from string
 
-	message.SetHeader("From", fmt.Sprintf("%s <%s>", s.Username, s.From))
+	if strings.Contains(s.Username, "@") {
+		dialer = mail.NewDialer(s.Host, s.Port, s.Username, s.Password)
+		from = s.From
+	} else {
+		dialer = mail.NewDialer(s.Host, s.Port, s.From, s.Password)
+		from = fmt.Sprintf("%s <%s>", s.Username, s.From)
+	}
+
+	message := mail.NewMessage()
+	message.SetHeader("From", from)
 	message.SetHeader("To", to)
 	message.SetHeader("Subject", subject)
 	message.SetBody("text/html", body)
+
+	if s.Protocol {
+		dialer.StartTLSPolicy = mail.MandatoryStartTLS
+	} else {
+		dialer.StartTLSPolicy = mail.NoStartTLS
+	}
 
 	// outlook STARTTLS policy adapter
 	if strings.Contains(s.Host, "outlook") {

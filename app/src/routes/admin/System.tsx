@@ -12,6 +12,13 @@ import Paragraph, {
   ParagraphSpace,
 } from "@/components/Paragraph.tsx";
 import { Button } from "@/components/ui/button.tsx";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select.tsx";
 import { Label } from "@/components/ui/label.tsx";
 import { Input } from "@/components/ui/input.tsx";
 import { useMemo, useReducer, useState } from "react";
@@ -28,6 +35,7 @@ import {
   setConfig,
   SiteState,
   SystemProps,
+  testWebSearching,
   updateRootPassword,
 } from "@/admin/api/system.ts";
 import { useEffectAsync } from "@/utils/hook.ts";
@@ -44,8 +52,8 @@ import {
 } from "@/components/ui/dialog.tsx";
 import { DialogTitle } from "@radix-ui/react-dialog";
 import Require from "@/components/Require.tsx";
-import { PencilLine, RotateCw, Save, Settings2 } from "lucide-react";
-import { FlexibleTextarea } from "@/components/ui/textarea.tsx";
+import { Loader2, PencilLine, RotateCw, Save, Settings2 } from "lucide-react";
+import { FlexibleTextarea, Textarea } from "@/components/ui/textarea.tsx";
 import Tips from "@/components/Tips.tsx";
 import { cn } from "@/components/ui/lib/utils.ts";
 import { Switch } from "@/components/ui/switch.tsx";
@@ -55,6 +63,7 @@ import { useChannelModels } from "@/admin/hook.tsx";
 import { useSelector } from "react-redux";
 import { selectSupportModels } from "@/store/chat.ts";
 import { JSONEditorProvider } from "@/components/EditorProvider.tsx";
+import { Combobox } from "@/components/ui/combo-box.tsx";
 
 type CompProps<T> = {
   data: T;
@@ -282,9 +291,7 @@ function Mail({ data, dispatch, onChange }: CompProps<MailState>) {
       data.port < 65535 &&
       data.username.length > 0 &&
       data.password.length > 0 &&
-      data.from.length > 0 &&
-      /\w+@\w+\.\w+/.test(data.from) &&
-      !data.username.includes("@")
+      data.from.length > 0
     );
   }, [data]);
 
@@ -334,6 +341,34 @@ function Mail({ data, dispatch, onChange }: CompProps<MailState>) {
       </ParagraphItem>
       <ParagraphItem>
         <Label>
+          <Require /> {t("admin.system.mailProtocol")}
+        </Label>
+        <Select
+          value={data.protocol ? "true" : "false"}
+          onValueChange={(value: string) => {
+            dispatch({
+              type: "update:mail.protocol",
+              value: value === "true",
+            });
+          }}
+        >
+          <SelectTrigger className={`select`}>
+            <SelectValue
+              placeholder={
+                data.protocol
+                  ? t("admin.system.mailProtocolTLS")
+                  : t("admin.system.mailProtocolSSL")
+              }
+            />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="true">TLS</SelectItem>
+            <SelectItem value="false">SSL</SelectItem>
+          </SelectContent>
+        </Select>
+      </ParagraphItem>
+      <ParagraphItem>
+        <Label>
           <Require /> {t("admin.system.mailPort")}
         </Label>
         <NumberInput
@@ -358,10 +393,7 @@ function Mail({ data, dispatch, onChange }: CompProps<MailState>) {
               value: e.target.value,
             })
           }
-          className={cn(
-            "transition-all duration-300",
-            data.username.includes("@") && `border-red-700`,
-          )}
+          className={cn("transition-all duration-300")}
           placeholder={t("admin.system.mailUser")}
         />
       </ParagraphItem>
@@ -393,12 +425,7 @@ function Mail({ data, dispatch, onChange }: CompProps<MailState>) {
             })
           }
           placeholder={`${data.username}@${location.hostname}`}
-          className={cn(
-            "transition-all duration-300",
-            data.from.length > 0 &&
-              !/\w+@\w+\.\w+/.test(data.from) &&
-              `border-red-700`,
-          )}
+          className={cn("transition-all duration-300")}
         />
       </ParagraphItem>
       <ParagraphSpace />
@@ -808,12 +835,20 @@ function Common({ form, data, dispatch, onChange }: CompProps<CommonState>) {
 function Search({ data, dispatch, onChange }: CompProps<SearchState>) {
   const { t } = useTranslation();
 
+  const [search, setSearch] = useState<string>("");
+  const [searchDialog, setSearchDialog] = useState<boolean>(false);
+  const [searchResult, setSearchResult] = useState<string>("");
+  const [searchLoading, setSearchLoading] = useState<boolean>(false);
+
   return (
     <Paragraph
       title={t("admin.system.search")}
       configParagraph={true}
       isCollapsed={true}
     >
+      <ParagraphDescription border>
+        {t("admin.system.searchTip")}
+      </ParagraphDescription>
       <ParagraphItem>
         <Label>{t("admin.system.searchEndpoint")}</Label>
         <Input
@@ -828,28 +863,172 @@ function Search({ data, dispatch, onChange }: CompProps<SearchState>) {
         />
       </ParagraphItem>
       <ParagraphItem>
-        <Label>
-          {t("admin.system.searchQuery")}
-          <Tips
-            className={`inline-block`}
-            content={t("admin.system.searchQueryTip")}
-          />
-        </Label>
-        <NumberInput
-          value={data.query}
-          onValueChange={(value) =>
-            dispatch({ type: "update:search.query", value })
-          }
-          placeholder={`5`}
-          min={0}
-          max={50}
+        <Label>{t("admin.system.searchEngines")}</Label>
+        <MultiCombobox
+          value={data.engines}
+          onChange={(value) => {
+            dispatch({ type: "update:search.engines", value });
+          }}
+          list={[
+            "google",
+            "bing",
+            "duckduckgo",
+            "qwant",
+            "brave",
+            "mojeek",
+            "arxiv",
+            "crossref",
+            "youtube",
+            "bilibili",
+            "presearch",
+            "yahoo",
+            "wiby",
+            "seznam",
+            "goo",
+            "naver",
+            "wikidata",
+            "wikipedia",
+            "wikimini",
+            "wikibooks",
+            "wikiquote",
+            "wikisource",
+            "wikispecies",
+            "wikiversity",
+            "wikivoyage",
+            "ask",
+            "currency",
+            "yep",
+            "yacy",
+            "genius",
+            "github",
+            "gitlab",
+            "gitea.com",
+            "bitbucket",
+            "codeberg",
+            "mdn",
+          ]}
+          placeholder={t("admin.system.searchEnginesPlaceholder", {
+            length: (data.engines || []).length,
+          })}
+          searchPlaceholder={t("admin.system.searchEnginesSearchPlaceholder")}
         />
       </ParagraphItem>
-      <ParagraphDescription border>
-        {t("admin.system.searchTip")}
-      </ParagraphDescription>
+      {data.engines.length === 0 && (
+        <ParagraphDescription border>
+          {t("admin.system.searchEnginesEmptyTip")}
+        </ParagraphDescription>
+      )}
+      <ParagraphItem>
+        <Label className={`flex flex-row items-center`}>
+          {t("admin.system.searchImageProxy")}
+          <Tips content={t("admin.system.searchImageProxyTip")} />
+        </Label>
+        <Switch
+          checked={data.image_proxy}
+          onCheckedChange={(value) => {
+            dispatch({ type: "update:search.image_proxy", value });
+          }}
+        />
+      </ParagraphItem>
+      <ParagraphItem>
+        <Label className={`flex flex-row items-center`}>
+          {t("admin.system.searchCrop")}
+          <Tips content={t("admin.system.searchCropTip")} />
+        </Label>
+        <Switch
+          checked={data.crop}
+          onCheckedChange={(value) => {
+            dispatch({ type: "update:search.crop", value });
+          }}
+        />
+      </ParagraphItem>
+      <ParagraphItem>
+        <Label>{t("admin.system.searchCropLen")}</Label>
+        <NumberInput
+          value={data.crop_len}
+          onValueChange={(value) =>
+            dispatch({ type: "update:search.crop_len", value })
+          }
+          min={1}
+          disabled={!data.crop}
+        />
+      </ParagraphItem>
+      <ParagraphItem>
+        <Label>{t("admin.system.searchSafeSearch")}</Label>
+        <Combobox
+          value={["none", "moderation", "strict"][data.safe_search] || "none"}
+          onChange={(value) => {
+            dispatch({
+              type: "update:search.safe_search",
+              value: ["none", "moderation", "strict"].indexOf(value),
+            });
+          }}
+          list={["none", "moderation", "strict"]}
+          listTranslated={`admin.system.searchSafeSearchModes`}
+          hideSearchBar
+        />
+      </ParagraphItem>
       <ParagraphFooter>
         <div className={`grow`} />
+        <Dialog open={searchDialog} onOpenChange={setSearchDialog}>
+          <DialogTrigger asChild>
+            <Button variant={`outline`} size={`sm`}>
+              {t("admin.system.searchTest")}
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{t("admin.system.searchTest")}</DialogTitle>
+              <FlexibleTextarea
+                placeholder={t("admin.system.searchTestTip")}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+              {(searchLoading || searchResult) && (
+                <div
+                  className={`mt-2 border rounded-md p-4 flex items-center justify-center flex-col`}
+                >
+                  {searchLoading ? (
+                    <Loader2 className={`h-4 w-4 animate-spin`} />
+                  ) : (
+                    <>
+                      <p className={`text-sm mb-1`}>SearXNG Result</p>
+                      <Textarea value={searchResult} rows={5} readOnly />
+                    </>
+                  )}
+                </div>
+              )}
+            </DialogHeader>
+            <DialogFooter>
+              <Button
+                variant={`outline`}
+                onClick={() => {
+                  setSearch("");
+                  setSearchDialog(false);
+                }}
+              >
+                {t("admin.cancel")}
+              </Button>
+              <Button
+                variant={`default`}
+                loading={true}
+                onClick={async () => {
+                  await onChange();
+
+                  setSearchResult("");
+                  setSearchLoading(true);
+                  const res = await testWebSearching(search);
+                  if (res.status) setSearchResult(res.result);
+
+                  toastState(toast, t, res, true);
+                  setSearchLoading(false);
+                }}
+              >
+                {t("admin.confirm")}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
         <Button
           size={`sm`}
           loading={true}
